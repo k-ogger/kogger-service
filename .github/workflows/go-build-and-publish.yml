@@ -74,7 +74,7 @@ jobs:
     - name: Push to Harbor
       run: |
         echo "Pushing the Helm chart to Harbor"
-        sed -i 's#KOGGER_GIT_TAG#${{ env.KOGGER_GIT_TAG }}#g' helm/kogger/Chart.yaml
-        sed -i 's#KOGGER_GIT_TAG#${{ env.KOGGER_GIT_TAG }}#g' helm/kogger/values.yaml
+        sed -i 's#KOGGER_GIT_TAG#${{ env.KOGGER_GIT_TAG }}#g' helm/kogger-service/Chart.yaml
+        sed -i 's#KOGGER_GIT_TAG#${{ env.KOGGER_GIT_TAG }}#g' helm/kogger-service/values.yaml
         helm package helm/kogger
         HELM_EXPERIMENTAL_OCI=1 helm push kogger-service-helm-${{ env.KOGGER_GIT_TAG }}.tgz oci://nexuszolara.me/kogger
