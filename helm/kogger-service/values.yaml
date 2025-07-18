@@ -1,0 +1,68 @@
+nameOverride: ""
+fullnameOverride: ""
+
+replicas: 1
+
+image:
+  repository: nexuszolara.me
+  name: kogger/kogger-service
+  tag: KOGGER_GIT_TAG
+  pullPolicy: IfNotPresent
+  extraAnnotations: {}
+
+lifecycle:
+  preStop:
+    exec:
+      command: ["sleep", "15"]
+
+port: 9935
+logLevel: DEBUG
+
+maximumStorageUses: 50
+
+# If host or port are omitted, they will fallback to database.host / database.port
+database_single: {}
+
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 9935
+
+cronjob:
+  schedule: "0 * * * *"
+
+kogger:
+  host: kogger-service.kogger.svc.cluster.local
+  port: 9935
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

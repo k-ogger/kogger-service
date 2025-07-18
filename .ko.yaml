@@ -1,0 +1,6 @@
+builds:
+- id: kogger-service
+  dir: ./
+  # outputImage: nexuszolara.me/kogger/kogger-service
+  ldflags:
+  - -s -w

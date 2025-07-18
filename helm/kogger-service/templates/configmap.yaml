@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ include "kogger-service.name" . }}-cm"
+  labels:
+{{ include "kogger-service.labels" . | indent 4 }}
+data:
+  EXPOSE_PORT: {{ .Values.port | quote }}
+  LOG_LEVEL: {{ .Values.logLevel | quote }}
+  KOGGER_HOST: {{ .Values.kogger.host | quote }}
+  KOGGER_PORT: {{ .Values.kogger.port | quote }}

@@ -1,0 +1,80 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go build and publish artifact
+
+on:
+  push:
+    tags:        
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23.2'
+
+    - name: Extract tag from the reference
+      run: |
+        KOGGER_GIT_TAG=$(echo $GITHUB_REF | sed 's/refs\/tags\///')
+        echo "Tag name is $KOGGER_GIT_TAG"
+        echo "KOGGER_GIT_TAG=$KOGGER_GIT_TAG" >> $GITHUB_ENV
+    
+    - name: Build with tag
+      run: go build -a -installsuffix cgo -o app .
+
+    - name: Upload artifact with tag
+      uses: actions/upload-artifact@v4
+      with:
+        name: kogger-service-${{ env.KOGGER_GIT_TAG }}
+        path: ${{ github.workspace }}/app
+
+    - name: Configure Docker for insecure registry
+      run: |
+        echo '{ "insecure-registries" : ["nexuszolara.me"] }' | sudo tee /etc/docker/daemon.json
+        sudo systemctl restart docker
+
+    - name: Create Harbor TLS certificate and key
+      run: |
+        echo "${{ secrets.HARBOR_CERT }}" > /tmp/harbor.crt
+        echo "${{ secrets.HARBOR_KEY }}" > /tmp/harbor.key
+        
+        sudo cp /tmp/harbor.crt /usr/local/share/ca-certificates/harbor.crt
+        sudo update-ca-certificates
+
+    - name: Login to Harbor
+      uses: docker/login-action@v3
+      with:
+        registry: "nexuszolara.me"
+        username: ${{ secrets.HARBOR_USERNAME  }}
+        password: ${{ secrets.HARBOR_PASSWORD }}
+
+    - uses: ko-build/setup-ko@v0.8
+    - name: Build and push Docker image using ko and .ko.yaml
+      env:
+        KO_DOCKER_REPO: nexuszolara.me/kogger
+        GODEBUG: x509ignoreCN=1
+      run: |
+        ko login nexuszolara.me --username ${{ secrets.HARBOR_USERNAME }} --password ${{ secrets.HARBOR_PASSWORD }}
+        
+        IMAGE_NAME=$(ko build --local -t ${{ env.KOGGER_GIT_TAG }} .)
+        echo "Built image: $IMAGE_NAME"
+        
+        docker images
+        
+        docker tag $IMAGE_NAME nexuszolara.me/kogger/kogger-service:${{ env.KOGGER_GIT_TAG }}
+        docker push nexuszolara.me/kogger/kogger-service:${{ env.KOGGER_GIT_TAG }}
+
+    - name: Push to Harbor
+      run: |
+        echo "Pushing the Helm chart to Harbor"
+        sed -i 's#KOGGER_GIT_TAG#${{ env.KOGGER_GIT_TAG }}#g' helm/kogger/Chart.yaml
+        sed -i 's#KOGGER_GIT_TAG#${{ env.KOGGER_GIT_TAG }}#g' helm/kogger/values.yaml
+        helm package helm/kogger
+        HELM_EXPERIMENTAL_OCI=1 helm push kogger-service-helm-${{ env.KOGGER_GIT_TAG }}.tgz oci://nexuszolara.me/kogger

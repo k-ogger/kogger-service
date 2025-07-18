@@ -1,0 +1,21 @@
+syntax = "proto3";
+package koggerservicerpc;
+option go_package = "github.com/k-ogger/kogger-service/koggerservicerpc";
+
+service KoggerService {
+    rpc GetLogs(Void) returns (Pods);
+}
+
+message Void {}
+
+message Pod {
+    string name = 1;
+    string namespace = 2;
+    string status = 3;
+    string nodeName = 4;
+    string logs = 5;
+}
+
+message Pods {
+    repeated Pod pods = 1;
+}

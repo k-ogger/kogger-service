@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ include "kogger-service.name" . }}-dpl"
+  labels:
+{{ include "kogger-service.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector: 
+    matchLabels:
+{{ include "kogger-service.matchLabels" . | indent 6 }}
+  template:
+    metadata:
+      labels:
+{{ include "kogger-service.labels" . | indent 8 }}
+      annotations:
+        kubectl.kubernetes.io/default-logs-container: {{ include "kogger-service.name" . }}
+    spec:
+      serviceAccountName: "{{ include "kogger-service.name" . }}-sa"
+      {{- with .Values.podSecurityContext }}
+      podSecurityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: {{ include "kogger-service.name" . }}
+        image: {{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.port }}
+        envFrom:
+        - configMapRef:
+            name: {{ include "kogger-service.name" . }}-cm
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+        lifecycle:
+          {{ toYaml .Values.lifecycle | nindent 10 }}
