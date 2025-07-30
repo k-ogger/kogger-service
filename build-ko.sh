@@ -13,7 +13,7 @@ usage() {
 
 microservice=kogger-service
 user=docker #pass=tcuser
-baseImageTag=v0.1.3
+baseImageTag=v0.0.1
 imageTag=KOGGER_GIT_TAG
 
 while getopts "t:h" option; do
@@ -37,5 +37,5 @@ while getopts "t:h" option; do
 done
 
 echo "$microservice build started"
-docker pull nexuszolara.me/library/zolara-ko:$baseImageTag
-docker run --privileged --rm -v $(pwd):/workspace/kogger-service/$microservice -v "/var/run/docker.sock:/var/run/docker.sock:rw" -w /workspace/kogger-service/$microservice nexuszolara.me/library/zolara-ko:$baseImageTag build --local -t $imageTag --base-import-paths
+docker pull nexuszolara.me/library/ko-distroless:$baseImageTag
+docker run --privileged --rm -v $(pwd):/workspace/kogger-service/$microservice -v "/var/run/docker.sock:/var/run/docker.sock:rw" -w /workspace/kogger-service/$microservice nexuszolara.me/library/ko-distroless:$baseImageTag build --local -t $imageTag --base-import-paths
