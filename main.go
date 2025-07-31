@@ -56,7 +56,9 @@ func runCronJob() {
 	client := koggerservicerpc.NewKoggerServiceClient(conn)
 
 	fmt.Println("Calling GetLogs...")
-	res, err := client.GetLogs(ctx, &koggerservicerpc.Void{})
+	res, err := client.GetLogs(ctx, &koggerservicerpc.LogsRequest{
+		Namespace: "default",
+	})
 	if err != nil {
 		fmt.Printf("ERROR: failed to get logs: %v\n", err)
 		return

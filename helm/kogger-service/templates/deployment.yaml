@@ -38,5 +38,10 @@ spec:
           httpGet:
             path: /healthz
             port: 8081
+        {{- if .Values.lifecycle }}
         lifecycle:
-          {{ toYaml .Values.lifecycle | nindent 10 }}
+          {{- if .Values.lifecycle.preStop }}
+          preStop:
+            {{- toYaml .Values.lifecycle.preStop | nindent 12 }}
+          {{- end }}
+        {{- end }}

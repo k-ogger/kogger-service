@@ -35,7 +35,10 @@ spec:
                 name: {{ include "kogger-service.name" . }}-cm
             {{- if .Values.lifecycle }}
             lifecycle:
-              {{- toYaml .Values.lifecycle | nindent 12 }}
+              {{- if .Values.lifecycle.preStop }}
+              preStop:
+                {{- toYaml .Values.lifecycle.preStop | nindent 16 }}
+              {{- end }}
             {{- end }}
             {{- if .Values.resources }}
             resources:

@@ -7,11 +7,12 @@
 package koggerservicerpc
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -21,6 +22,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type LogsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Namespace     string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Pod           string                 `protobuf:"bytes,2,opt,name=pod,proto3" json:"pod,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogsRequest) Reset() {
+	*x = LogsRequest{}
+	mi := &file_koggerservice_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogsRequest) ProtoMessage() {}
+
+func (x *LogsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_koggerservice_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogsRequest.ProtoReflect.Descriptor instead.
+func (*LogsRequest) Descriptor() ([]byte, []int) {
+	return file_koggerservice_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *LogsRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *LogsRequest) GetPod() string {
+	if x != nil {
+		return x.Pod
+	}
+	return ""
+}
+
 type Void struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -29,7 +82,7 @@ type Void struct {
 
 func (x *Void) Reset() {
 	*x = Void{}
-	mi := &file_koggerservice_proto_msgTypes[0]
+	mi := &file_koggerservice_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -41,7 +94,7 @@ func (x *Void) String() string {
 func (*Void) ProtoMessage() {}
 
 func (x *Void) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[0]
+	mi := &file_koggerservice_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -54,7 +107,103 @@ func (x *Void) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Void.ProtoReflect.Descriptor instead.
 func (*Void) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{0}
+	return file_koggerservice_proto_rawDescGZIP(), []int{1}
+}
+
+type Namespaces struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Namespaces    []*Namespace           `protobuf:"bytes,1,rep,name=namespaces,proto3" json:"namespaces,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Namespaces) Reset() {
+	*x = Namespaces{}
+	mi := &file_koggerservice_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Namespaces) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Namespaces) ProtoMessage() {}
+
+func (x *Namespaces) ProtoReflect() protoreflect.Message {
+	mi := &file_koggerservice_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Namespaces.ProtoReflect.Descriptor instead.
+func (*Namespaces) Descriptor() ([]byte, []int) {
+	return file_koggerservice_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Namespaces) GetNamespaces() []*Namespace {
+	if x != nil {
+		return x.Namespaces
+	}
+	return nil
+}
+
+type Namespace struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Path          string                 `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Namespace) Reset() {
+	*x = Namespace{}
+	mi := &file_koggerservice_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Namespace) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Namespace) ProtoMessage() {}
+
+func (x *Namespace) ProtoReflect() protoreflect.Message {
+	mi := &file_koggerservice_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Namespace.ProtoReflect.Descriptor instead.
+func (*Namespace) Descriptor() ([]byte, []int) {
+	return file_koggerservice_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *Namespace) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Namespace) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
 }
 
 type Pod struct {
@@ -70,7 +219,7 @@ type Pod struct {
 
 func (x *Pod) Reset() {
 	*x = Pod{}
-	mi := &file_koggerservice_proto_msgTypes[1]
+	mi := &file_koggerservice_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -82,7 +231,7 @@ func (x *Pod) String() string {
 func (*Pod) ProtoMessage() {}
 
 func (x *Pod) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[1]
+	mi := &file_koggerservice_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -95,7 +244,7 @@ func (x *Pod) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Pod.ProtoReflect.Descriptor instead.
 func (*Pod) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{1}
+	return file_koggerservice_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Pod) GetName() string {
@@ -142,7 +291,7 @@ type Pods struct {
 
 func (x *Pods) Reset() {
 	*x = Pods{}
-	mi := &file_koggerservice_proto_msgTypes[2]
+	mi := &file_koggerservice_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -154,7 +303,7 @@ func (x *Pods) String() string {
 func (*Pods) ProtoMessage() {}
 
 func (x *Pods) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[2]
+	mi := &file_koggerservice_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -167,7 +316,7 @@ func (x *Pods) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Pods.ProtoReflect.Descriptor instead.
 func (*Pods) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{2}
+	return file_koggerservice_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Pods) GetPods() []*Pod {
@@ -181,8 +330,19 @@ var File_koggerservice_proto protoreflect.FileDescriptor
 
 const file_koggerservice_proto_rawDesc = "" +
 	"\n" +
-	"\x13koggerservice.proto\x12\x10koggerservicerpc\"\x06\n" +
-	"\x04Void\"\x7f\n" +
+	"\x13koggerservice.proto\x12\x10koggerservicerpc\"=\n" +
+	"\vLogsRequest\x12\x1c\n" +
+	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x10\n" +
+	"\x03pod\x18\x02 \x01(\tR\x03pod\"\x06\n" +
+	"\x04Void\"I\n" +
+	"\n" +
+	"Namespaces\x12;\n" +
+	"\n" +
+	"namespaces\x18\x01 \x03(\v2\x1b.koggerservicerpc.NamespaceR\n" +
+	"namespaces\"3\n" +
+	"\tNamespace\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
+	"\x04path\x18\x02 \x01(\tR\x04path\"\x7f\n" +
 	"\x03Pod\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x16\n" +
@@ -190,9 +350,10 @@ const file_koggerservice_proto_rawDesc = "" +
 	"\bnodeName\x18\x04 \x01(\tR\bnodeName\x12\x12\n" +
 	"\x04logs\x18\x05 \x01(\tR\x04logs\"1\n" +
 	"\x04Pods\x12)\n" +
-	"\x04pods\x18\x01 \x03(\v2\x15.koggerservicerpc.PodR\x04pods2J\n" +
-	"\rKoggerService\x129\n" +
-	"\aGetLogs\x12\x16.koggerservicerpc.Void\x1a\x16.koggerservicerpc.PodsB4Z2github.com/k-ogger/kogger-service/koggerservicerpcb\x06proto3"
+	"\x04pods\x18\x01 \x03(\v2\x15.koggerservicerpc.PodR\x04pods2\x98\x01\n" +
+	"\rKoggerService\x12E\n" +
+	"\rGetNamespaces\x12\x16.koggerservicerpc.Void\x1a\x1c.koggerservicerpc.Namespaces\x12@\n" +
+	"\aGetLogs\x12\x1d.koggerservicerpc.LogsRequest\x1a\x16.koggerservicerpc.PodsB4Z2github.com/k-ogger/kogger-service/koggerservicerpcb\x06proto3"
 
 var (
 	file_koggerservice_proto_rawDescOnce sync.Once
@@ -206,21 +367,27 @@ func file_koggerservice_proto_rawDescGZIP() []byte {
 	return file_koggerservice_proto_rawDescData
 }
 
-var file_koggerservice_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_koggerservice_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_koggerservice_proto_goTypes = []any{
-	(*Void)(nil), // 0: koggerservicerpc.Void
-	(*Pod)(nil),  // 1: koggerservicerpc.Pod
-	(*Pods)(nil), // 2: koggerservicerpc.Pods
+	(*LogsRequest)(nil), // 0: koggerservicerpc.LogsRequest
+	(*Void)(nil),        // 1: koggerservicerpc.Void
+	(*Namespaces)(nil),  // 2: koggerservicerpc.Namespaces
+	(*Namespace)(nil),   // 3: koggerservicerpc.Namespace
+	(*Pod)(nil),         // 4: koggerservicerpc.Pod
+	(*Pods)(nil),        // 5: koggerservicerpc.Pods
 }
 var file_koggerservice_proto_depIdxs = []int32{
-	1, // 0: koggerservicerpc.Pods.pods:type_name -> koggerservicerpc.Pod
-	0, // 1: koggerservicerpc.KoggerService.GetLogs:input_type -> koggerservicerpc.Void
-	2, // 2: koggerservicerpc.KoggerService.GetLogs:output_type -> koggerservicerpc.Pods
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	3, // 0: koggerservicerpc.Namespaces.namespaces:type_name -> koggerservicerpc.Namespace
+	4, // 1: koggerservicerpc.Pods.pods:type_name -> koggerservicerpc.Pod
+	1, // 2: koggerservicerpc.KoggerService.GetNamespaces:input_type -> koggerservicerpc.Void
+	0, // 3: koggerservicerpc.KoggerService.GetLogs:input_type -> koggerservicerpc.LogsRequest
+	2, // 4: koggerservicerpc.KoggerService.GetNamespaces:output_type -> koggerservicerpc.Namespaces
+	5, // 5: koggerservicerpc.KoggerService.GetLogs:output_type -> koggerservicerpc.Pods
+	4, // [4:6] is the sub-list for method output_type
+	2, // [2:4] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_koggerservice_proto_init() }
@@ -234,7 +401,7 @@ func file_koggerservice_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_koggerservice_proto_rawDesc), len(file_koggerservice_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

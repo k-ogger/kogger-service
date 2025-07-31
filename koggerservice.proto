@@ -3,10 +3,25 @@ package koggerservicerpc;
 option go_package = "github.com/k-ogger/kogger-service/koggerservicerpc";
 
 service KoggerService {
-    rpc GetLogs(Void) returns (Pods);
+    rpc GetNamespaces(Void) returns (Namespaces);
+    rpc GetLogs(LogsRequest) returns (Pods);
+}
+
+message LogsRequest {
+    string namespace = 1;
+    string pod = 2;
 }
 
 message Void {}
+
+message Namespaces {
+    repeated Namespace namespaces = 1;
+}
+
+message Namespace {
+    string name = 1;
+    string path = 2;
+}
 
 message Pod {
     string name = 1;

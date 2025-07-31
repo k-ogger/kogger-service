@@ -3,6 +3,7 @@ package kogger
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -16,11 +17,13 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func (*server) GetLogs(ctx context.Context, in *Void) (*Pods, error) {
-	grpcToken := grpctoken.GetToken(ctx)
-	logger.Debug(grpcToken, "GetLogs called with %v", in)
+const (
+	NamespaceLogsPathInject = "/api/logs/{%s}"
+)
 
-	// list all pods with k8s client
+func (*server) GetNamespaces(ctx context.Context, req *Void) (*Namespaces, error) {
+	grpcToken := grpctoken.GetToken(ctx)
+
 	kubeconfig, err := rest.InClusterConfig()
 	if err != nil {
 		logger.Err(grpcToken, "Failed to retrieve in-cluster Kubernetes config: %s", err)
@@ -33,16 +36,74 @@ func (*server) GetLogs(ctx context.Context, in *Void) (*Pods, error) {
 		return nil, err
 	}
 
-	allpods, err := clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
+	namespacesList, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		logger.Err(grpcToken, "Failed to list pods: %s", err)
+		logger.Err(grpcToken, "Failed to list namespaces: %s", err)
 		return nil, err
 	}
 
-	podLogsChan := make(chan *Pod, len(allpods.Items))
+	namespaces := []*Namespace{}
+	for _, ns := range namespacesList.Items {
+		namespaces = append(namespaces, &Namespace{
+			Name: ns.Name,
+			Path: fmt.Sprintf(NamespaceLogsPathInject, ns.Name),
+		})
+	}
+
+	logger.Debug(grpcToken, "Returning %d namespaces", len(namespaces))
+	return &Namespaces{
+		Namespaces: namespaces,
+	}, nil
+}
+
+func (*server) GetLogs(ctx context.Context, req *LogsRequest) (*Pods, error) {
+	grpcToken := grpctoken.GetToken(ctx)
+
+	kubeconfig, err := rest.InClusterConfig()
+	if err != nil {
+		logger.Err(grpcToken, "Failed to retrieve in-cluster Kubernetes config: %s", err)
+		return nil, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(kubeconfig)
+	if err != nil {
+		logger.Err(grpcToken, "Failed to initialize Kubernetes client: %s", err)
+		return nil, err
+	}
+
+	var podsToProcess []v1.Pod
+	if len(req.GetNamespace()) != 0 {
+		if len(req.GetPod()) != 0 {
+			logger.Debug(grpcToken, "Fetching logs for pod %s in namespace %s", req.GetPod(), req.GetNamespace())
+
+			pod, err := clientset.CoreV1().Pods(req.GetNamespace()).Get(ctx, req.GetPod(), metav1.GetOptions{})
+			if err != nil {
+				logger.Err(grpcToken, "Failed to get pod %s in namespace %s: %s", req.GetPod(), req.GetNamespace(), err)
+				return nil, err
+			}
+			podsToProcess = []v1.Pod{*pod}
+		} else {
+			logger.Debug(grpcToken, "Fetching logs for all pods in namespace %s", req.GetNamespace())
+			allpods, err := clientset.CoreV1().Pods(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+			if err != nil {
+				logger.Err(grpcToken, "Failed to list pods in namespace %s: %s", req.GetNamespace(), err)
+				return nil, err
+			}
+			podsToProcess = allpods.Items
+		}
+	} else {
+		allpods, err := clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
+		if err != nil {
+			logger.Err(grpcToken, "Failed to list pods: %s", err)
+			return nil, err
+		}
+		podsToProcess = allpods.Items
+	}
+
+	podLogsChan := make(chan *Pod, len(podsToProcess))
 	wg := &sync.WaitGroup{}
 
-	for _, pod := range allpods.Items {
+	for _, pod := range podsToProcess {
 		if pod.Status.Phase != v1.PodRunning {
 			logger.Debug(grpcToken, "Skipping pod %s in namespace %s - status: %s", pod.Name, pod.Namespace, pod.Status.Phase)
 			continue
