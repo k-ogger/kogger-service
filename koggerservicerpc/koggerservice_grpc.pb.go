@@ -21,7 +21,6 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	KoggerService_GetNamespaces_FullMethodName = "/koggerservicerpc.KoggerService/GetNamespaces"
 	KoggerService_ListResources_FullMethodName = "/koggerservicerpc.KoggerService/ListResources"
-	KoggerService_GetResources_FullMethodName  = "/koggerservicerpc.KoggerService/GetResources"
 	KoggerService_GetResource_FullMethodName   = "/koggerservicerpc.KoggerService/GetResource"
 	KoggerService_GetLogs_FullMethodName       = "/koggerservicerpc.KoggerService/GetLogs"
 )
@@ -32,7 +31,6 @@ const (
 type KoggerServiceClient interface {
 	GetNamespaces(ctx context.Context, in *Void, opts ...grpc.CallOption) (*Namespaces, error)
 	ListResources(ctx context.Context, in *ListResourcesRequest, opts ...grpc.CallOption) (*ResourcesResponse, error)
-	GetResources(ctx context.Context, in *ResourcesRequest, opts ...grpc.CallOption) (*Resources, error)
 	GetResource(ctx context.Context, in *ResourceRequest, opts ...grpc.CallOption) (*Resource, error)
 	GetLogs(ctx context.Context, in *LogsRequest, opts ...grpc.CallOption) (*Logs, error)
 }
@@ -65,16 +63,6 @@ func (c *koggerServiceClient) ListResources(ctx context.Context, in *ListResourc
 	return out, nil
 }
 
-func (c *koggerServiceClient) GetResources(ctx context.Context, in *ResourcesRequest, opts ...grpc.CallOption) (*Resources, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Resources)
-	err := c.cc.Invoke(ctx, KoggerService_GetResources_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *koggerServiceClient) GetResource(ctx context.Context, in *ResourceRequest, opts ...grpc.CallOption) (*Resource, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Resource)
@@ -101,7 +89,6 @@ func (c *koggerServiceClient) GetLogs(ctx context.Context, in *LogsRequest, opts
 type KoggerServiceServer interface {
 	GetNamespaces(context.Context, *Void) (*Namespaces, error)
 	ListResources(context.Context, *ListResourcesRequest) (*ResourcesResponse, error)
-	GetResources(context.Context, *ResourcesRequest) (*Resources, error)
 	GetResource(context.Context, *ResourceRequest) (*Resource, error)
 	GetLogs(context.Context, *LogsRequest) (*Logs, error)
 	mustEmbedUnimplementedKoggerServiceServer()
@@ -119,9 +106,6 @@ func (UnimplementedKoggerServiceServer) GetNamespaces(context.Context, *Void) (*
 }
 func (UnimplementedKoggerServiceServer) ListResources(context.Context, *ListResourcesRequest) (*ResourcesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListResources not implemented")
-}
-func (UnimplementedKoggerServiceServer) GetResources(context.Context, *ResourcesRequest) (*Resources, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetResources not implemented")
 }
 func (UnimplementedKoggerServiceServer) GetResource(context.Context, *ResourceRequest) (*Resource, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetResource not implemented")
@@ -186,24 +170,6 @@ func _KoggerService_ListResources_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _KoggerService_GetResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResourcesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(KoggerServiceServer).GetResources(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: KoggerService_GetResources_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KoggerServiceServer).GetResources(ctx, req.(*ResourcesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _KoggerService_GetResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ResourceRequest)
 	if err := dec(in); err != nil {
@@ -254,10 +220,6 @@ var KoggerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListResources",
 			Handler:    _KoggerService_ListResources_Handler,
-		},
-		{
-			MethodName: "GetResources",
-			Handler:    _KoggerService_GetResources_Handler,
 		},
 		{
 			MethodName: "GetResource",

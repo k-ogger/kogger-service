@@ -2,10 +2,11 @@ syntax = "proto3";
 package koggerservicerpc;
 option go_package = "github.com/k-ogger/kogger-service/koggerservicerpc";
 
+import "google/protobuf/struct.proto";
+
 service KoggerService {
     rpc GetNamespaces(Void) returns (Namespaces);
     rpc ListResources(ListResourcesRequest) returns (ResourcesResponse);
-    rpc GetResources(ResourcesRequest) returns (Resources);
     rpc GetResource(ResourceRequest) returns (Resource);
     rpc GetLogs(LogsRequest) returns (Logs);
 }
@@ -14,6 +15,7 @@ message Void {}
 
 message ListResourcesRequest {
     string namespace = 1;
+    string resourceType = 2;
 }
 
 enum ResourceType {
@@ -34,14 +36,8 @@ enum ResourceType {
     RESOURCE_TYPE_NETWORKPOLICY = 14;
     RESOURCE_TYPE_SERVICEACCOUNT = 15;
     RESOURCE_TYPE_ENDPOINTS = 16;
-    RESOURCE_TYPE_EVENT = 17;
-    RESOURCE_TYPE_ROLE = 18;
-    RESOURCE_TYPE_ROLEBINDING = 19;
-}
-
-message ResourcesRequest {
-    string namespace = 1;
-    ResourceType resourceType = 2;
+    RESOURCE_TYPE_ROLE = 17;
+    RESOURCE_TYPE_ROLEBINDING = 18;
 }
 
 message ResourceRequest {
@@ -86,7 +82,7 @@ message Resources {
 }
 
 message AdjustableFields {
-    map<string, string> fields = 1;
+    map<string, google.protobuf.Value> fields = 1;
 }
 
 message Resource {

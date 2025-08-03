@@ -9,6 +9,7 @@ package koggerservicerpc
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -41,9 +42,8 @@ const (
 	ResourceType_RESOURCE_TYPE_NETWORKPOLICY         ResourceType = 14
 	ResourceType_RESOURCE_TYPE_SERVICEACCOUNT        ResourceType = 15
 	ResourceType_RESOURCE_TYPE_ENDPOINTS             ResourceType = 16
-	ResourceType_RESOURCE_TYPE_EVENT                 ResourceType = 17
-	ResourceType_RESOURCE_TYPE_ROLE                  ResourceType = 18
-	ResourceType_RESOURCE_TYPE_ROLEBINDING           ResourceType = 19
+	ResourceType_RESOURCE_TYPE_ROLE                  ResourceType = 17
+	ResourceType_RESOURCE_TYPE_ROLEBINDING           ResourceType = 18
 )
 
 // Enum value maps for ResourceType.
@@ -66,9 +66,8 @@ var (
 		14: "RESOURCE_TYPE_NETWORKPOLICY",
 		15: "RESOURCE_TYPE_SERVICEACCOUNT",
 		16: "RESOURCE_TYPE_ENDPOINTS",
-		17: "RESOURCE_TYPE_EVENT",
-		18: "RESOURCE_TYPE_ROLE",
-		19: "RESOURCE_TYPE_ROLEBINDING",
+		17: "RESOURCE_TYPE_ROLE",
+		18: "RESOURCE_TYPE_ROLEBINDING",
 	}
 	ResourceType_value = map[string]int32{
 		"RESOURCE_TYPE_UNKNOWN":               0,
@@ -88,9 +87,8 @@ var (
 		"RESOURCE_TYPE_NETWORKPOLICY":         14,
 		"RESOURCE_TYPE_SERVICEACCOUNT":        15,
 		"RESOURCE_TYPE_ENDPOINTS":             16,
-		"RESOURCE_TYPE_EVENT":                 17,
-		"RESOURCE_TYPE_ROLE":                  18,
-		"RESOURCE_TYPE_ROLEBINDING":           19,
+		"RESOURCE_TYPE_ROLE":                  17,
+		"RESOURCE_TYPE_ROLEBINDING":           18,
 	}
 )
 
@@ -160,6 +158,7 @@ func (*Void) Descriptor() ([]byte, []int) {
 type ListResourcesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Namespace     string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	ResourceType  string                 `protobuf:"bytes,2,opt,name=resourceType,proto3" json:"resourceType,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -201,56 +200,11 @@ func (x *ListResourcesRequest) GetNamespace() string {
 	return ""
 }
 
-type ResourcesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Namespace     string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	ResourceType  ResourceType           `protobuf:"varint,2,opt,name=resourceType,proto3,enum=koggerservicerpc.ResourceType" json:"resourceType,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ResourcesRequest) Reset() {
-	*x = ResourcesRequest{}
-	mi := &file_koggerservice_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ResourcesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ResourcesRequest) ProtoMessage() {}
-
-func (x *ResourcesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ResourcesRequest.ProtoReflect.Descriptor instead.
-func (*ResourcesRequest) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *ResourcesRequest) GetNamespace() string {
-	if x != nil {
-		return x.Namespace
-	}
-	return ""
-}
-
-func (x *ResourcesRequest) GetResourceType() ResourceType {
+func (x *ListResourcesRequest) GetResourceType() string {
 	if x != nil {
 		return x.ResourceType
 	}
-	return ResourceType_RESOURCE_TYPE_UNKNOWN
+	return ""
 }
 
 type ResourceRequest struct {
@@ -264,7 +218,7 @@ type ResourceRequest struct {
 
 func (x *ResourceRequest) Reset() {
 	*x = ResourceRequest{}
-	mi := &file_koggerservice_proto_msgTypes[3]
+	mi := &file_koggerservice_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -276,7 +230,7 @@ func (x *ResourceRequest) String() string {
 func (*ResourceRequest) ProtoMessage() {}
 
 func (x *ResourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[3]
+	mi := &file_koggerservice_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -289,7 +243,7 @@ func (x *ResourceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceRequest.ProtoReflect.Descriptor instead.
 func (*ResourceRequest) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{3}
+	return file_koggerservice_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ResourceRequest) GetNamespace() string {
@@ -322,7 +276,7 @@ type PodsRequest struct {
 
 func (x *PodsRequest) Reset() {
 	*x = PodsRequest{}
-	mi := &file_koggerservice_proto_msgTypes[4]
+	mi := &file_koggerservice_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -334,7 +288,7 @@ func (x *PodsRequest) String() string {
 func (*PodsRequest) ProtoMessage() {}
 
 func (x *PodsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[4]
+	mi := &file_koggerservice_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -347,7 +301,7 @@ func (x *PodsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PodsRequest.ProtoReflect.Descriptor instead.
 func (*PodsRequest) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{4}
+	return file_koggerservice_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PodsRequest) GetNamespace() string {
@@ -367,7 +321,7 @@ type LogsRequest struct {
 
 func (x *LogsRequest) Reset() {
 	*x = LogsRequest{}
-	mi := &file_koggerservice_proto_msgTypes[5]
+	mi := &file_koggerservice_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -379,7 +333,7 @@ func (x *LogsRequest) String() string {
 func (*LogsRequest) ProtoMessage() {}
 
 func (x *LogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[5]
+	mi := &file_koggerservice_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -392,7 +346,7 @@ func (x *LogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogsRequest.ProtoReflect.Descriptor instead.
 func (*LogsRequest) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{5}
+	return file_koggerservice_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *LogsRequest) GetNamespace() string {
@@ -418,7 +372,7 @@ type Namespaces struct {
 
 func (x *Namespaces) Reset() {
 	*x = Namespaces{}
-	mi := &file_koggerservice_proto_msgTypes[6]
+	mi := &file_koggerservice_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -430,7 +384,7 @@ func (x *Namespaces) String() string {
 func (*Namespaces) ProtoMessage() {}
 
 func (x *Namespaces) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[6]
+	mi := &file_koggerservice_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -443,7 +397,7 @@ func (x *Namespaces) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Namespaces.ProtoReflect.Descriptor instead.
 func (*Namespaces) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{6}
+	return file_koggerservice_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Namespaces) GetNamespaces() []*Namespace {
@@ -462,7 +416,7 @@ type Namespace struct {
 
 func (x *Namespace) Reset() {
 	*x = Namespace{}
-	mi := &file_koggerservice_proto_msgTypes[7]
+	mi := &file_koggerservice_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -474,7 +428,7 @@ func (x *Namespace) String() string {
 func (*Namespace) ProtoMessage() {}
 
 func (x *Namespace) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[7]
+	mi := &file_koggerservice_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -487,7 +441,7 @@ func (x *Namespace) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Namespace.ProtoReflect.Descriptor instead.
 func (*Namespace) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{7}
+	return file_koggerservice_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Namespace) GetName() string {
@@ -506,7 +460,7 @@ type ResourceInlist struct {
 
 func (x *ResourceInlist) Reset() {
 	*x = ResourceInlist{}
-	mi := &file_koggerservice_proto_msgTypes[8]
+	mi := &file_koggerservice_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -518,7 +472,7 @@ func (x *ResourceInlist) String() string {
 func (*ResourceInlist) ProtoMessage() {}
 
 func (x *ResourceInlist) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[8]
+	mi := &file_koggerservice_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -531,7 +485,7 @@ func (x *ResourceInlist) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceInlist.ProtoReflect.Descriptor instead.
 func (*ResourceInlist) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{8}
+	return file_koggerservice_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ResourceInlist) GetName() string {
@@ -551,7 +505,7 @@ type ResourcesList struct {
 
 func (x *ResourcesList) Reset() {
 	*x = ResourcesList{}
-	mi := &file_koggerservice_proto_msgTypes[9]
+	mi := &file_koggerservice_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -563,7 +517,7 @@ func (x *ResourcesList) String() string {
 func (*ResourcesList) ProtoMessage() {}
 
 func (x *ResourcesList) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[9]
+	mi := &file_koggerservice_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -576,7 +530,7 @@ func (x *ResourcesList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourcesList.ProtoReflect.Descriptor instead.
 func (*ResourcesList) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{9}
+	return file_koggerservice_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ResourcesList) GetResourceType() string {
@@ -603,7 +557,7 @@ type ResourcesResponse struct {
 
 func (x *ResourcesResponse) Reset() {
 	*x = ResourcesResponse{}
-	mi := &file_koggerservice_proto_msgTypes[10]
+	mi := &file_koggerservice_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -615,7 +569,7 @@ func (x *ResourcesResponse) String() string {
 func (*ResourcesResponse) ProtoMessage() {}
 
 func (x *ResourcesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[10]
+	mi := &file_koggerservice_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -628,7 +582,7 @@ func (x *ResourcesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourcesResponse.ProtoReflect.Descriptor instead.
 func (*ResourcesResponse) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{10}
+	return file_koggerservice_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ResourcesResponse) GetNamespace() string {
@@ -654,7 +608,7 @@ type Resources struct {
 
 func (x *Resources) Reset() {
 	*x = Resources{}
-	mi := &file_koggerservice_proto_msgTypes[11]
+	mi := &file_koggerservice_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -666,7 +620,7 @@ func (x *Resources) String() string {
 func (*Resources) ProtoMessage() {}
 
 func (x *Resources) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[11]
+	mi := &file_koggerservice_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -679,7 +633,7 @@ func (x *Resources) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Resources.ProtoReflect.Descriptor instead.
 func (*Resources) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{11}
+	return file_koggerservice_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Resources) GetResources() []*Resource {
@@ -690,15 +644,15 @@ func (x *Resources) GetResources() []*Resource {
 }
 
 type AdjustableFields struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Fields        map[string]string      `protobuf:"bytes,1,rep,name=fields,proto3" json:"fields,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state         protoimpl.MessageState     `protogen:"open.v1"`
+	Fields        map[string]*structpb.Value `protobuf:"bytes,1,rep,name=fields,proto3" json:"fields,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AdjustableFields) Reset() {
 	*x = AdjustableFields{}
-	mi := &file_koggerservice_proto_msgTypes[12]
+	mi := &file_koggerservice_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -710,7 +664,7 @@ func (x *AdjustableFields) String() string {
 func (*AdjustableFields) ProtoMessage() {}
 
 func (x *AdjustableFields) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[12]
+	mi := &file_koggerservice_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -723,10 +677,10 @@ func (x *AdjustableFields) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdjustableFields.ProtoReflect.Descriptor instead.
 func (*AdjustableFields) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{12}
+	return file_koggerservice_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *AdjustableFields) GetFields() map[string]string {
+func (x *AdjustableFields) GetFields() map[string]*structpb.Value {
 	if x != nil {
 		return x.Fields
 	}
@@ -745,7 +699,7 @@ type Resource struct {
 
 func (x *Resource) Reset() {
 	*x = Resource{}
-	mi := &file_koggerservice_proto_msgTypes[13]
+	mi := &file_koggerservice_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -757,7 +711,7 @@ func (x *Resource) String() string {
 func (*Resource) ProtoMessage() {}
 
 func (x *Resource) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[13]
+	mi := &file_koggerservice_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -770,7 +724,7 @@ func (x *Resource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Resource.ProtoReflect.Descriptor instead.
 func (*Resource) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{13}
+	return file_koggerservice_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Resource) GetNamespace() string {
@@ -812,7 +766,7 @@ type Logs struct {
 
 func (x *Logs) Reset() {
 	*x = Logs{}
-	mi := &file_koggerservice_proto_msgTypes[14]
+	mi := &file_koggerservice_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -824,7 +778,7 @@ func (x *Logs) String() string {
 func (*Logs) ProtoMessage() {}
 
 func (x *Logs) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[14]
+	mi := &file_koggerservice_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -837,7 +791,7 @@ func (x *Logs) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Logs.ProtoReflect.Descriptor instead.
 func (*Logs) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{14}
+	return file_koggerservice_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Logs) GetPod() string {
@@ -872,7 +826,7 @@ type LogEntry struct {
 
 func (x *LogEntry) Reset() {
 	*x = LogEntry{}
-	mi := &file_koggerservice_proto_msgTypes[15]
+	mi := &file_koggerservice_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -884,7 +838,7 @@ func (x *LogEntry) String() string {
 func (*LogEntry) ProtoMessage() {}
 
 func (x *LogEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_koggerservice_proto_msgTypes[15]
+	mi := &file_koggerservice_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -897,7 +851,7 @@ func (x *LogEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogEntry.ProtoReflect.Descriptor instead.
 func (*LogEntry) Descriptor() ([]byte, []int) {
-	return file_koggerservice_proto_rawDescGZIP(), []int{15}
+	return file_koggerservice_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *LogEntry) GetContainer() string {
@@ -925,13 +879,11 @@ var File_koggerservice_proto protoreflect.FileDescriptor
 
 const file_koggerservice_proto_rawDesc = "" +
 	"\n" +
-	"\x13koggerservice.proto\x12\x10koggerservicerpc\"\x06\n" +
-	"\x04Void\"4\n" +
+	"\x13koggerservice.proto\x12\x10koggerservicerpc\x1a\x1cgoogle/protobuf/struct.proto\"\x06\n" +
+	"\x04Void\"X\n" +
 	"\x14ListResourcesRequest\x12\x1c\n" +
-	"\tnamespace\x18\x01 \x01(\tR\tnamespace\"t\n" +
-	"\x10ResourcesRequest\x12\x1c\n" +
-	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12B\n" +
-	"\fresourceType\x18\x02 \x01(\x0e2\x1e.koggerservicerpc.ResourceTypeR\fresourceType\"\x87\x01\n" +
+	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\"\n" +
+	"\fresourceType\x18\x02 \x01(\tR\fresourceType\"\x87\x01\n" +
 	"\x0fResourceRequest\x12\x1c\n" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12B\n" +
 	"\fresourceType\x18\x02 \x01(\x0e2\x1e.koggerservicerpc.ResourceTypeR\fresourceType\x12\x12\n" +
@@ -957,12 +909,12 @@ const file_koggerservice_proto_rawDesc = "" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12E\n" +
 	"\rresourcesList\x18\x02 \x03(\v2\x1f.koggerservicerpc.ResourcesListR\rresourcesList\"E\n" +
 	"\tResources\x128\n" +
-	"\tresources\x18\x01 \x03(\v2\x1a.koggerservicerpc.ResourceR\tresources\"\x95\x01\n" +
+	"\tresources\x18\x01 \x03(\v2\x1a.koggerservicerpc.ResourceR\tresources\"\xad\x01\n" +
 	"\x10AdjustableFields\x12F\n" +
-	"\x06fields\x18\x01 \x03(\v2..koggerservicerpc.AdjustableFields.FieldsEntryR\x06fields\x1a9\n" +
+	"\x06fields\x18\x01 \x03(\v2..koggerservicerpc.AdjustableFields.FieldsEntryR\x06fields\x1aQ\n" +
 	"\vFieldsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x90\x01\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
+	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"\x90\x01\n" +
 	"\bResource\x12\x1c\n" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
@@ -975,7 +927,7 @@ const file_koggerservice_proto_rawDesc = "" +
 	"\bLogEntry\x12\x1c\n" +
 	"\tcontainer\x18\x01 \x01(\tR\tcontainer\x12\x1c\n" +
 	"\ttimestamp\x18\x02 \x01(\tR\ttimestamp\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage*\xd4\x04\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage*\xbb\x04\n" +
 	"\fResourceType\x12\x19\n" +
 	"\x15RESOURCE_TYPE_UNKNOWN\x10\x00\x12\x15\n" +
 	"\x11RESOURCE_TYPE_POD\x10\x01\x12\x19\n" +
@@ -994,14 +946,12 @@ const file_koggerservice_proto_rawDesc = "" +
 	"\x15RESOURCE_TYPE_INGRESS\x10\r\x12\x1f\n" +
 	"\x1bRESOURCE_TYPE_NETWORKPOLICY\x10\x0e\x12 \n" +
 	"\x1cRESOURCE_TYPE_SERVICEACCOUNT\x10\x0f\x12\x1b\n" +
-	"\x17RESOURCE_TYPE_ENDPOINTS\x10\x10\x12\x17\n" +
-	"\x13RESOURCE_TYPE_EVENT\x10\x11\x12\x16\n" +
-	"\x12RESOURCE_TYPE_ROLE\x10\x12\x12\x1d\n" +
-	"\x19RESOURCE_TYPE_ROLEBINDING\x10\x132\x95\x03\n" +
+	"\x17RESOURCE_TYPE_ENDPOINTS\x10\x10\x12\x16\n" +
+	"\x12RESOURCE_TYPE_ROLE\x10\x11\x12\x1d\n" +
+	"\x19RESOURCE_TYPE_ROLEBINDING\x10\x122\xc4\x02\n" +
 	"\rKoggerService\x12E\n" +
 	"\rGetNamespaces\x12\x16.koggerservicerpc.Void\x1a\x1c.koggerservicerpc.Namespaces\x12\\\n" +
-	"\rListResources\x12&.koggerservicerpc.ListResourcesRequest\x1a#.koggerservicerpc.ResourcesResponse\x12O\n" +
-	"\fGetResources\x12\".koggerservicerpc.ResourcesRequest\x1a\x1b.koggerservicerpc.Resources\x12L\n" +
+	"\rListResources\x12&.koggerservicerpc.ListResourcesRequest\x1a#.koggerservicerpc.ResourcesResponse\x12L\n" +
 	"\vGetResource\x12!.koggerservicerpc.ResourceRequest\x1a\x1a.koggerservicerpc.Resource\x12@\n" +
 	"\aGetLogs\x12\x1d.koggerservicerpc.LogsRequest\x1a\x16.koggerservicerpc.LogsB4Z2github.com/k-ogger/kogger-service/koggerservicerpcb\x06proto3"
 
@@ -1018,49 +968,47 @@ func file_koggerservice_proto_rawDescGZIP() []byte {
 }
 
 var file_koggerservice_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_koggerservice_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_koggerservice_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_koggerservice_proto_goTypes = []any{
 	(ResourceType)(0),            // 0: koggerservicerpc.ResourceType
 	(*Void)(nil),                 // 1: koggerservicerpc.Void
 	(*ListResourcesRequest)(nil), // 2: koggerservicerpc.ListResourcesRequest
-	(*ResourcesRequest)(nil),     // 3: koggerservicerpc.ResourcesRequest
-	(*ResourceRequest)(nil),      // 4: koggerservicerpc.ResourceRequest
-	(*PodsRequest)(nil),          // 5: koggerservicerpc.PodsRequest
-	(*LogsRequest)(nil),          // 6: koggerservicerpc.LogsRequest
-	(*Namespaces)(nil),           // 7: koggerservicerpc.Namespaces
-	(*Namespace)(nil),            // 8: koggerservicerpc.Namespace
-	(*ResourceInlist)(nil),       // 9: koggerservicerpc.ResourceInlist
-	(*ResourcesList)(nil),        // 10: koggerservicerpc.ResourcesList
-	(*ResourcesResponse)(nil),    // 11: koggerservicerpc.ResourcesResponse
-	(*Resources)(nil),            // 12: koggerservicerpc.Resources
-	(*AdjustableFields)(nil),     // 13: koggerservicerpc.AdjustableFields
-	(*Resource)(nil),             // 14: koggerservicerpc.Resource
-	(*Logs)(nil),                 // 15: koggerservicerpc.Logs
-	(*LogEntry)(nil),             // 16: koggerservicerpc.LogEntry
-	nil,                          // 17: koggerservicerpc.AdjustableFields.FieldsEntry
+	(*ResourceRequest)(nil),      // 3: koggerservicerpc.ResourceRequest
+	(*PodsRequest)(nil),          // 4: koggerservicerpc.PodsRequest
+	(*LogsRequest)(nil),          // 5: koggerservicerpc.LogsRequest
+	(*Namespaces)(nil),           // 6: koggerservicerpc.Namespaces
+	(*Namespace)(nil),            // 7: koggerservicerpc.Namespace
+	(*ResourceInlist)(nil),       // 8: koggerservicerpc.ResourceInlist
+	(*ResourcesList)(nil),        // 9: koggerservicerpc.ResourcesList
+	(*ResourcesResponse)(nil),    // 10: koggerservicerpc.ResourcesResponse
+	(*Resources)(nil),            // 11: koggerservicerpc.Resources
+	(*AdjustableFields)(nil),     // 12: koggerservicerpc.AdjustableFields
+	(*Resource)(nil),             // 13: koggerservicerpc.Resource
+	(*Logs)(nil),                 // 14: koggerservicerpc.Logs
+	(*LogEntry)(nil),             // 15: koggerservicerpc.LogEntry
+	nil,                          // 16: koggerservicerpc.AdjustableFields.FieldsEntry
+	(*structpb.Value)(nil),       // 17: google.protobuf.Value
 }
 var file_koggerservice_proto_depIdxs = []int32{
-	0,  // 0: koggerservicerpc.ResourcesRequest.resourceType:type_name -> koggerservicerpc.ResourceType
-	0,  // 1: koggerservicerpc.ResourceRequest.resourceType:type_name -> koggerservicerpc.ResourceType
-	8,  // 2: koggerservicerpc.Namespaces.namespaces:type_name -> koggerservicerpc.Namespace
-	9,  // 3: koggerservicerpc.ResourcesList.resources:type_name -> koggerservicerpc.ResourceInlist
-	10, // 4: koggerservicerpc.ResourcesResponse.resourcesList:type_name -> koggerservicerpc.ResourcesList
-	14, // 5: koggerservicerpc.Resources.resources:type_name -> koggerservicerpc.Resource
-	17, // 6: koggerservicerpc.AdjustableFields.fields:type_name -> koggerservicerpc.AdjustableFields.FieldsEntry
-	13, // 7: koggerservicerpc.Resource.fields:type_name -> koggerservicerpc.AdjustableFields
-	16, // 8: koggerservicerpc.Logs.entries:type_name -> koggerservicerpc.LogEntry
+	0,  // 0: koggerservicerpc.ResourceRequest.resourceType:type_name -> koggerservicerpc.ResourceType
+	7,  // 1: koggerservicerpc.Namespaces.namespaces:type_name -> koggerservicerpc.Namespace
+	8,  // 2: koggerservicerpc.ResourcesList.resources:type_name -> koggerservicerpc.ResourceInlist
+	9,  // 3: koggerservicerpc.ResourcesResponse.resourcesList:type_name -> koggerservicerpc.ResourcesList
+	13, // 4: koggerservicerpc.Resources.resources:type_name -> koggerservicerpc.Resource
+	16, // 5: koggerservicerpc.AdjustableFields.fields:type_name -> koggerservicerpc.AdjustableFields.FieldsEntry
+	12, // 6: koggerservicerpc.Resource.fields:type_name -> koggerservicerpc.AdjustableFields
+	15, // 7: koggerservicerpc.Logs.entries:type_name -> koggerservicerpc.LogEntry
+	17, // 8: koggerservicerpc.AdjustableFields.FieldsEntry.value:type_name -> google.protobuf.Value
 	1,  // 9: koggerservicerpc.KoggerService.GetNamespaces:input_type -> koggerservicerpc.Void
 	2,  // 10: koggerservicerpc.KoggerService.ListResources:input_type -> koggerservicerpc.ListResourcesRequest
-	3,  // 11: koggerservicerpc.KoggerService.GetResources:input_type -> koggerservicerpc.ResourcesRequest
-	4,  // 12: koggerservicerpc.KoggerService.GetResource:input_type -> koggerservicerpc.ResourceRequest
-	6,  // 13: koggerservicerpc.KoggerService.GetLogs:input_type -> koggerservicerpc.LogsRequest
-	7,  // 14: koggerservicerpc.KoggerService.GetNamespaces:output_type -> koggerservicerpc.Namespaces
-	11, // 15: koggerservicerpc.KoggerService.ListResources:output_type -> koggerservicerpc.ResourcesResponse
-	12, // 16: koggerservicerpc.KoggerService.GetResources:output_type -> koggerservicerpc.Resources
-	14, // 17: koggerservicerpc.KoggerService.GetResource:output_type -> koggerservicerpc.Resource
-	15, // 18: koggerservicerpc.KoggerService.GetLogs:output_type -> koggerservicerpc.Logs
-	14, // [14:19] is the sub-list for method output_type
-	9,  // [9:14] is the sub-list for method input_type
+	3,  // 11: koggerservicerpc.KoggerService.GetResource:input_type -> koggerservicerpc.ResourceRequest
+	5,  // 12: koggerservicerpc.KoggerService.GetLogs:input_type -> koggerservicerpc.LogsRequest
+	6,  // 13: koggerservicerpc.KoggerService.GetNamespaces:output_type -> koggerservicerpc.Namespaces
+	10, // 14: koggerservicerpc.KoggerService.ListResources:output_type -> koggerservicerpc.ResourcesResponse
+	13, // 15: koggerservicerpc.KoggerService.GetResource:output_type -> koggerservicerpc.Resource
+	14, // 16: koggerservicerpc.KoggerService.GetLogs:output_type -> koggerservicerpc.Logs
+	13, // [13:17] is the sub-list for method output_type
+	9,  // [9:13] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name
@@ -1077,7 +1025,7 @@ func file_koggerservice_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_koggerservice_proto_rawDesc), len(file_koggerservice_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   17,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
