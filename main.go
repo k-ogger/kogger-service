@@ -11,6 +11,8 @@ import (
 	"github.com/k-ogger/kogger-service/koggerservicerpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 func main() {
@@ -21,6 +23,20 @@ func main() {
 		runCronJob()
 		return
 	} else {
+		kubeconfig, err := rest.InClusterConfig()
+		if err != nil {
+			fmt.Errorf("Failed to retrieve in-cluster Kubernetes config: %s", err)
+			return
+		}
+
+		clientset, err := kubernetes.NewForConfig(kubeconfig)
+		if err != nil {
+			fmt.Errorf("Failed to initialize Kubernetes client: %s", err)
+			return
+		}
+
+		server.Clientset = clientset
+
 		fmt.Println("Running in server mode")
 		server.Run()
 	}
@@ -55,22 +71,40 @@ func runCronJob() {
 	fmt.Println("gRPC connection established successfully")
 	client := koggerservicerpc.NewKoggerServiceClient(conn)
 
-	fmt.Println("Calling GetLogs...")
-	res, err := client.GetLogs(ctx, &koggerservicerpc.LogsRequest{
-		Namespace: "default",
+	pods, err := client.GetResources(ctx, &koggerservicerpc.ResourceRequest{
+		Namespace:    "default",
+		ResourceType: koggerservicerpc.ResourceType_RESOURCE_TYPE_POD,
 	})
 	if err != nil {
-		fmt.Printf("ERROR: failed to get logs: %v\n", err)
+		fmt.Printf("ERROR: failed to get pods: %v\n", err)
 		return
 	}
-	if len(res.Pods) == 0 {
+	if len(pods.GetResources()) == 0 {
 		fmt.Println("No pods found")
 		return
 	}
-	for _, pod := range res.Pods {
+	for _, pod := range pods.GetResources() {
+		fmt.Println("########### Processing pod ###########")
 		fmt.Printf("Pod Name: %s, Namespace: %s\n", pod.Name, pod.Namespace)
-		fmt.Printf("Log: %s\n", pod.Logs)
+		fmt.Printf("Pod Status: %s\n", pod.Status)
+
+		logs, err := client.GetLogs(ctx, &koggerservicerpc.LogsRequest{
+			Pod:       pod.Name,
+			Namespace: pod.Namespace,
+		})
+		if err != nil {
+			fmt.Printf("ERROR: failed to get logs for pod %s in namespace %s: %v\n", pod.Name, pod.Namespace, err)
+			continue
+		}
+		if len(logs.GetEntries()) == 0 {
+			fmt.Printf("No logs found for pod %s in namespace %s\n", pod.Name, pod.Namespace)
+			continue
+		}
+		for _, log := range logs.GetEntries() {
+			fmt.Printf("Log Container: %s, Timestamp: %s, Message: %s\n", log.GetContainer(), log.GetTimestamp(), log.GetMessage())
+		}
 	}
+
 	fmt.Println("Cron job completed successfully")
 }
 

@@ -1,11 +1,10 @@
 package kogger
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"sync"
-	"time"
+	"io"
+	"strings"
 
 	grpctoken "github.com/ZolaraProject/library/grpctoken"
 	logger "github.com/ZolaraProject/library/logger"
@@ -13,30 +12,16 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 )
 
-const (
-	NamespaceLogsPathInject = "/api/logs/{%s}"
+var (
+	DeployementFields = []string{"Image", "Replicas", "Selector", "Containers"}
 )
 
 func (*server) GetNamespaces(ctx context.Context, req *Void) (*Namespaces, error) {
 	grpcToken := grpctoken.GetToken(ctx)
 
-	kubeconfig, err := rest.InClusterConfig()
-	if err != nil {
-		logger.Err(grpcToken, "Failed to retrieve in-cluster Kubernetes config: %s", err)
-		return nil, err
-	}
-
-	clientset, err := kubernetes.NewForConfig(kubeconfig)
-	if err != nil {
-		logger.Err(grpcToken, "Failed to initialize Kubernetes client: %s", err)
-		return nil, err
-	}
-
-	namespacesList, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	namespacesList, err := Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		logger.Err(grpcToken, "Failed to list namespaces: %s", err)
 		return nil, err
@@ -46,7 +31,6 @@ func (*server) GetNamespaces(ctx context.Context, req *Void) (*Namespaces, error
 	for _, ns := range namespacesList.Items {
 		namespaces = append(namespaces, &Namespace{
 			Name: ns.Name,
-			Path: fmt.Sprintf(NamespaceLogsPathInject, ns.Name),
 		})
 	}
 
@@ -56,114 +40,520 @@ func (*server) GetNamespaces(ctx context.Context, req *Void) (*Namespaces, error
 	}, nil
 }
 
-func (*server) GetLogs(ctx context.Context, req *LogsRequest) (*Pods, error) {
+func (*server) ListResources(ctx context.Context, req *ListResourcesRequest) (*ResourcesResponse, error) {
+	grpcToken := grpctoken.GetToken(ctx)
+	if len(req.GetNamespace()) == 0 {
+		logger.Err(grpcToken, "Namespace not specified")
+		return nil, fmt.Errorf("Namespace not specified")
+	}
+
+	logger.Debug(grpcToken, "Listing all resources in namespace %s", req.GetNamespace())
+
+	var resourcesMap = make(map[string][]*ResourceInlist)
+	pods, err := Clientset.CoreV1().Pods(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	logger.Debug(grpcToken, "Pods list: %+v", pods)
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list pods in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(pods.Items) == 0 {
+			logger.Debug(grpcToken, "No pods found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_POD)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_POD)] = []*ResourceInlist{}
+			}
+
+			for _, pod := range pods.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_POD)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_POD)], &ResourceInlist{
+					Name: pod.Name,
+				})
+			}
+		}
+	}
+
+	services, err := Clientset.CoreV1().Services(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list services in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(services.Items) == 0 {
+			logger.Debug(grpcToken, "No services found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_SERVICE)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_SERVICE)] = []*ResourceInlist{}
+			}
+
+			for _, service := range services.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_SERVICE)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_SERVICE)], &ResourceInlist{
+					Name: service.Name,
+				})
+			}
+		}
+	}
+
+	deployments, err := Clientset.AppsV1().Deployments(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list deployments in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(deployments.Items) == 0 {
+			logger.Debug(grpcToken, "No services found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_DEPLOYMENT)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_DEPLOYMENT)] = []*ResourceInlist{}
+			}
+
+			for _, deployment := range deployments.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_DEPLOYMENT)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_DEPLOYMENT)], &ResourceInlist{
+					Name: deployment.Name,
+				})
+			}
+		}
+	}
+
+	statefulsets, err := Clientset.AppsV1().StatefulSets(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list statefulsets in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(statefulsets.Items) == 0 {
+			logger.Debug(grpcToken, "No statefulsets found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_STATEFULSET)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_STATEFULSET)] = []*ResourceInlist{}
+			}
+
+			for _, statefulset := range statefulsets.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_STATEFULSET)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_STATEFULSET)], &ResourceInlist{
+					Name: statefulset.Name,
+				})
+			}
+		}
+	}
+
+	configmaps, err := Clientset.CoreV1().ConfigMaps(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list configmaps in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(configmaps.Items) == 0 {
+			logger.Debug(grpcToken, "No configmaps found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_CONFIGMAP)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_CONFIGMAP)] = []*ResourceInlist{}
+			}
+
+			for _, configmap := range configmaps.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_CONFIGMAP)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_CONFIGMAP)], &ResourceInlist{
+					Name: configmap.Name,
+				})
+			}
+		}
+	}
+
+	secrets, err := Clientset.CoreV1().Secrets(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list secrets in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(secrets.Items) == 0 {
+			logger.Debug(grpcToken, "No secrets found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_SECRET)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_SECRET)] = []*ResourceInlist{}
+			}
+
+			for _, secret := range secrets.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_SECRET)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_SECRET)], &ResourceInlist{
+					Name: secret.Name,
+				})
+			}
+		}
+	}
+
+	pvcs, err := Clientset.CoreV1().PersistentVolumeClaims(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list persistentvolumeclaims in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(pvcs.Items) == 0 {
+			logger.Debug(grpcToken, "No pvcs found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_PERSISTENTVOLUMECLAIM)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_PERSISTENTVOLUMECLAIM)] = []*ResourceInlist{}
+			}
+
+			for _, pvc := range pvcs.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_PERSISTENTVOLUMECLAIM)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_PERSISTENTVOLUMECLAIM)], &ResourceInlist{
+					Name: pvc.Name,
+				})
+			}
+		}
+	}
+
+	cronjobs, err := Clientset.BatchV1().CronJobs(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list cronjobs in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(cronjobs.Items) == 0 {
+			logger.Debug(grpcToken, "No cronjobs found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_CRONJOB)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_CRONJOB)] = []*ResourceInlist{}
+			}
+
+			for _, cronjob := range cronjobs.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_CRONJOB)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_CRONJOB)], &ResourceInlist{
+					Name: cronjob.Name,
+				})
+			}
+		}
+	}
+
+	jobs, err := Clientset.BatchV1().Jobs(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list jobs in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(jobs.Items) == 0 {
+			logger.Debug(grpcToken, "No jobs found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_JOB)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_JOB)] = []*ResourceInlist{}
+			}
+
+			for _, job := range jobs.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_JOB)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_JOB)], &ResourceInlist{
+					Name: job.Name,
+				})
+			}
+		}
+	}
+
+	replicasets, err := Clientset.AppsV1().ReplicaSets(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list replicasets in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(replicasets.Items) == 0 {
+			logger.Debug(grpcToken, "No replicasets found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_REPLICASET)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_REPLICASET)] = []*ResourceInlist{}
+			}
+
+			for _, replicaset := range replicasets.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_REPLICASET)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_REPLICASET)], &ResourceInlist{
+					Name: replicaset.Name,
+				})
+			}
+		}
+	}
+
+	daemonsets, err := Clientset.AppsV1().DaemonSets(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list daemonsets in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(daemonsets.Items) == 0 {
+			logger.Debug(grpcToken, "No daemonsets found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_DAEMONSET)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_DAEMONSET)] = []*ResourceInlist{}
+			}
+
+			for _, daemonset := range daemonsets.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_DAEMONSET)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_DAEMONSET)], &ResourceInlist{
+					Name: daemonset.Name,
+				})
+			}
+		}
+	}
+
+	ingresses, err := Clientset.NetworkingV1().Ingresses(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list ingresses in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(ingresses.Items) == 0 {
+			logger.Debug(grpcToken, "No ingresses found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_INGRESS)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_INGRESS)] = []*ResourceInlist{}
+			}
+
+			for _, ingress := range ingresses.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_INGRESS)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_INGRESS)], &ResourceInlist{
+					Name: ingress.Name,
+				})
+			}
+		}
+	}
+
+	networkPolicies, err := Clientset.NetworkingV1().NetworkPolicies(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list networkpolicies in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(networkPolicies.Items) == 0 {
+			logger.Debug(grpcToken, "No networkPolicies found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_NETWORKPOLICY)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_NETWORKPOLICY)] = []*ResourceInlist{}
+			}
+
+			for _, networkPolicy := range networkPolicies.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_NETWORKPOLICY)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_NETWORKPOLICY)], &ResourceInlist{
+					Name: networkPolicy.Name,
+				})
+			}
+		}
+	}
+
+	serviceAccounts, err := Clientset.CoreV1().ServiceAccounts(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list serviceaccounts in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(serviceAccounts.Items) == 0 {
+			logger.Debug(grpcToken, "No serviceAccounts found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_SERVICEACCOUNT)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_SERVICEACCOUNT)] = []*ResourceInlist{}
+			}
+
+			for _, serviceAccount := range serviceAccounts.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_SERVICEACCOUNT)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_SERVICEACCOUNT)], &ResourceInlist{
+					Name: serviceAccount.Name,
+				})
+			}
+		}
+	}
+
+	endpoints, err := Clientset.CoreV1().Endpoints(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list endpoints in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(endpoints.Items) == 0 {
+			logger.Debug(grpcToken, "No endpoints found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_ENDPOINTS)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_ENDPOINTS)] = []*ResourceInlist{}
+			}
+
+			for _, endpoint := range endpoints.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_ENDPOINTS)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_ENDPOINTS)], &ResourceInlist{
+					Name: endpoint.Name,
+				})
+			}
+		}
+	}
+
+	events, err := Clientset.CoreV1().Events(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list events in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(events.Items) == 0 {
+			logger.Debug(grpcToken, "No events found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_EVENT)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_EVENT)] = []*ResourceInlist{}
+			}
+
+			for _, event := range events.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_EVENT)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_EVENT)], &ResourceInlist{
+					Name: event.Name,
+				})
+			}
+		}
+	}
+
+	roles, err := Clientset.RbacV1().Roles(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list roles in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(roles.Items) == 0 {
+			logger.Debug(grpcToken, "No roles found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_ROLE)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_ROLE)] = []*ResourceInlist{}
+			}
+
+			for _, role := range roles.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_ROLE)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_ROLE)], &ResourceInlist{
+					Name: role.Name,
+				})
+			}
+		}
+	}
+
+	roleBindings, err := Clientset.RbacV1().RoleBindings(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		logger.Warn(grpcToken, "Failed to list rolebindings in namespace %s: %s", req.GetNamespace(), err)
+	} else {
+		if len(roleBindings.Items) == 0 {
+			logger.Debug(grpcToken, "No roleBindings found in namespace %s", req.GetNamespace())
+		} else {
+			if _, ok := resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_ROLEBINDING)]; !ok {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_ROLEBINDING)] = []*ResourceInlist{}
+			}
+
+			for _, roleBinding := range roleBindings.Items {
+				resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_ROLEBINDING)] = append(resourcesMap[ResourceTypeToString(ResourceType_RESOURCE_TYPE_ROLEBINDING)], &ResourceInlist{
+					Name: roleBinding.Name,
+				})
+			}
+		}
+	}
+
+	resourcesList := []*ResourcesList{}
+	for resourceType, resourceInList := range resourcesMap {
+		resourcesList = append(resourcesList, &ResourcesList{
+			ResourceType: resourceType,
+			Resources:    resourceInList,
+		})
+	}
+
+	logger.Debug(grpcToken, "Returning %d resources in namespace %s", len(resourcesList), req.GetNamespace())
+	return &ResourcesResponse{
+		Namespace:     req.GetNamespace(),
+		ResourcesList: resourcesList,
+	}, nil
+}
+
+func (*server) GetResources(ctx context.Context, req *ResourceRequest) (*Resources, error) {
 	grpcToken := grpctoken.GetToken(ctx)
 
-	kubeconfig, err := rest.InClusterConfig()
-	if err != nil {
-		logger.Err(grpcToken, "Failed to retrieve in-cluster Kubernetes config: %s", err)
-		return nil, err
+	if len(req.GetNamespace()) == 0 || req.GetResourceType() == 0 {
+		logger.Err(grpcToken, "Namespace or resource type not specified")
+		return nil, fmt.Errorf("Namespace or resource type not specified")
 	}
 
-	clientset, err := kubernetes.NewForConfig(kubeconfig)
-	if err != nil {
-		logger.Err(grpcToken, "Failed to initialize Kubernetes client: %s", err)
-		return nil, err
-	}
+	var resourceType string = ResourceTypeToString(req.GetResourceType())
+	logger.Debug(grpcToken, "Fetching resources of type %s in namespace %s", resourceType, req.GetNamespace())
 
-	var podsToProcess []v1.Pod
-	if len(req.GetNamespace()) != 0 {
-		if len(req.GetPod()) != 0 {
-			logger.Debug(grpcToken, "Fetching logs for pod %s in namespace %s", req.GetPod(), req.GetNamespace())
+	var res []*Resource
 
-			pod, err := clientset.CoreV1().Pods(req.GetNamespace()).Get(ctx, req.GetPod(), metav1.GetOptions{})
-			if err != nil {
-				logger.Err(grpcToken, "Failed to get pod %s in namespace %s: %s", req.GetPod(), req.GetNamespace(), err)
-				return nil, err
-			}
-			podsToProcess = []v1.Pod{*pod}
-		} else {
-			logger.Debug(grpcToken, "Fetching logs for all pods in namespace %s", req.GetNamespace())
-			allpods, err := clientset.CoreV1().Pods(req.GetNamespace()).List(ctx, metav1.ListOptions{})
-			if err != nil {
-				logger.Err(grpcToken, "Failed to list pods in namespace %s: %s", req.GetNamespace(), err)
-				return nil, err
-			}
-			podsToProcess = allpods.Items
-		}
-	} else {
-		allpods, err := clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
+	switch req.GetResourceType() {
+	case ResourceType_RESOURCE_TYPE_POD:
+		pods, err := Clientset.CoreV1().Pods(req.GetNamespace()).List(ctx, metav1.ListOptions{})
 		if err != nil {
-			logger.Err(grpcToken, "Failed to list pods: %s", err)
+			logger.Err(grpcToken, "Failed to list pods in namespace %s: %s", req.GetNamespace(), err)
 			return nil, err
 		}
-		podsToProcess = allpods.Items
+		for _, pod := range pods.Items {
+			res = append(res, &Resource{
+				Namespace: pod.Namespace,
+				Name:      pod.Name,
+				Status:    string(pod.Status.Phase),
+			})
+		}
+	case ResourceType_RESOURCE_TYPE_DEPLOYMENT:
+		deployments, err := Clientset.AppsV1().Deployments(req.GetNamespace()).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			logger.Err(grpcToken, "Failed to list deployments in namespace %s: %s", req.GetNamespace(), err)
+			return nil, err
+		}
+		for _, deployment := range deployments.Items {
+			deploymentFields := &AdjustableFields{
+				Fields: make(map[string]string),
+			}
+			for _, field := range DeployementFields {
+				switch field {
+				case "Image":
+					if len(deployment.Spec.Template.Spec.Containers) > 0 {
+						deploymentFields.Fields[field] = deployment.Spec.Template.Spec.Containers[0].Image
+					}
+				case "Replicas":
+					deploymentFields.Fields[field] = fmt.Sprintf("%d", *deployment.Spec.Replicas)
+				case "Selector":
+					deploymentFields.Fields[field] = fmt.Sprintf("%v", deployment.Spec.Selector.MatchLabels)
+				case "Containers":
+					containers := []string{}
+					for _, container := range deployment.Spec.Template.Spec.Containers {
+						containers = append(containers, container.Name)
+					}
+					deploymentFields.Fields[field] = fmt.Sprintf("%v", containers)
+				}
+			}
+
+			status := "Unknown"
+			if len(deployment.Status.Conditions) > 0 {
+				status = string(deployment.Status.Conditions[0].Type)
+			}
+
+			res = append(res, &Resource{
+				Namespace: deployment.Namespace,
+				Name:      deployment.Name,
+				Status:    status,
+				Fields:    deploymentFields,
+			})
+		}
+	default:
+		logger.Err(grpcToken, "Unsupported resource type: %s", resourceType)
+		return nil, fmt.Errorf("unsupported resource type: %s", resourceType)
 	}
 
-	podLogsChan := make(chan *Pod, len(podsToProcess))
-	wg := &sync.WaitGroup{}
+	logger.Debug(grpcToken, "Returning %d resources of type %s in namespace %s", len(res), resourceType, req.GetNamespace())
+	return &Resources{
+		Resources: res,
+	}, nil
+}
 
-	for _, pod := range podsToProcess {
-		if pod.Status.Phase != v1.PodRunning {
-			logger.Debug(grpcToken, "Skipping pod %s in namespace %s - status: %s", pod.Name, pod.Namespace, pod.Status.Phase)
+func (*server) GetLogs(ctx context.Context, req *LogsRequest) (*Logs, error) {
+	grpcToken := grpctoken.GetToken(ctx)
+
+	if len(req.GetNamespace()) == 0 || len(req.GetPod()) == 0 {
+		logger.Err(grpcToken, "Namespace or pod not specified")
+		return nil, fmt.Errorf("namespace or pod not specified")
+	}
+
+	logger.Debug(grpcToken, "Fetching logs for pod %s in namespace %s", req.GetPod(), req.GetNamespace())
+
+	pod, err := Clientset.CoreV1().Pods(req.GetNamespace()).Get(ctx, req.GetPod(), metav1.GetOptions{})
+	if err != nil {
+		logger.Err(grpcToken, "Failed to get pod %s in namespace %s: %s", req.GetPod(), req.GetNamespace(), err)
+		return nil, err
+	}
+
+	logs := []*LogEntry{}
+
+	for _, container := range pod.Spec.Containers {
+		logReq := Clientset.CoreV1().Pods(req.GetNamespace()).GetLogs(pod.Name, &v1.PodLogOptions{
+			Container:  container.Name,
+			Timestamps: true,
+		})
+		podLogs, err := logReq.Stream(ctx)
+		if err != nil {
+			logger.Err(grpcToken, "Failed to get logs for pod %s in namespace %s, container %s: %s", req.GetPod(), req.GetNamespace(), container.Name, err)
 			continue
 		}
 
-		wg.Add(1)
-		logger.Debug(grpcToken, "Pod found: %s in namespace %s", pod.Name, pod.Namespace)
-		go func(pod v1.Pod) {
-			defer wg.Done()
+		buf := new(strings.Builder)
+		if _, err := io.Copy(buf, podLogs); err != nil {
+			logger.Err(grpcToken, "Failed to read logs for pod %s in namespace %s, container %s: %s", req.GetPod(), req.GetNamespace(), container.Name, err)
+			podLogs.Close()
+			continue
+		}
+		if err := podLogs.Close(); err != nil {
+			logger.Err(grpcToken, "Failed to close log stream for pod %s in namespace %s, container %s: %s", req.GetPod(), req.GetNamespace(), container.Name, err)
+		}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
-
-			req := clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &v1.PodLogOptions{})
-			podLogs, err := req.Stream(ctx)
-			if err != nil {
-				logger.Warn(grpcToken, "Failed to get logs for pod %s in namespace %s: %s", pod.Name, pod.Namespace, err)
-				return
-			}
-			defer podLogs.Close()
-
-			logs := ""
-			scanner := bufio.NewScanner(podLogs)
-			for scanner.Scan() {
-				logs += scanner.Text() + "\n"
+		logLines := strings.Split(strings.TrimSpace(buf.String()), "\n")
+		for _, line := range logLines {
+			if strings.TrimSpace(line) == "" {
+				continue
 			}
 
-			if err := scanner.Err(); err != nil {
-				logger.Warn(grpcToken, "Error reading logs for pod %s in namespace %s: %s", pod.Name, pod.Namespace, err)
-				return
+			timestamp := ""
+			message := line
+
+			if len(line) > 30 && line[4] == '-' && line[7] == '-' && line[10] == 'T' {
+				parts := strings.SplitN(line, " ", 2)
+				if len(parts) == 2 {
+					timestamp = parts[0]
+					message = parts[1]
+				}
 			}
 
-			podLogsChan <- &Pod{
-				Name:      pod.Name,
-				Namespace: pod.Namespace,
-				Status:    string(pod.Status.Phase),
-				NodeName:  pod.Spec.NodeName,
-				Logs:      logs,
-			}
-		}(pod)
-	}
-	wg.Wait()
-
-	close(podLogsChan)
-
-	pods := &Pods{}
-	logger.Debug(grpcToken, "########## Pod Logs ##########")
-	for podLog := range podLogsChan {
-		if podLog != nil {
-			pods.Pods = append(pods.Pods, podLog)
-			logger.Debug(grpcToken, "namespace: %s, pod: %s, status: %s", podLog.Namespace, podLog.Name, podLog.Status)
-			logger.Debug(grpcToken, "Logs: %s", podLog.Logs)
-			logger.Debug(grpcToken, "")
+			logs = append(logs, &LogEntry{
+				Container: container.Name,
+				Timestamp: timestamp,
+				Message:   message,
+			})
 		}
 	}
-	logger.Debug(grpcToken, "Returning %d pods with logs", len(pods.Pods))
-	if len(pods.Pods) == 0 {
-		logger.Debug(grpcToken, "No pods found with logs")
-		return &Pods{}, nil
-	}
 
-	return pods, nil
+	return &Logs{
+		Pod:       req.GetPod(),
+		Namespace: req.GetNamespace(),
+		Entries:   logs,
+	}, nil
 }

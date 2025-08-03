@@ -8,7 +8,6 @@ package koggerservicerpc
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -21,6 +20,9 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	KoggerService_GetNamespaces_FullMethodName = "/koggerservicerpc.KoggerService/GetNamespaces"
+	KoggerService_ListResources_FullMethodName = "/koggerservicerpc.KoggerService/ListResources"
+	KoggerService_GetResources_FullMethodName  = "/koggerservicerpc.KoggerService/GetResources"
+	KoggerService_GetResource_FullMethodName   = "/koggerservicerpc.KoggerService/GetResource"
 	KoggerService_GetLogs_FullMethodName       = "/koggerservicerpc.KoggerService/GetLogs"
 )
 
@@ -29,7 +31,10 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type KoggerServiceClient interface {
 	GetNamespaces(ctx context.Context, in *Void, opts ...grpc.CallOption) (*Namespaces, error)
-	GetLogs(ctx context.Context, in *LogsRequest, opts ...grpc.CallOption) (*Pods, error)
+	ListResources(ctx context.Context, in *ListResourcesRequest, opts ...grpc.CallOption) (*ResourcesResponse, error)
+	GetResources(ctx context.Context, in *ResourcesRequest, opts ...grpc.CallOption) (*Resources, error)
+	GetResource(ctx context.Context, in *ResourceRequest, opts ...grpc.CallOption) (*Resource, error)
+	GetLogs(ctx context.Context, in *LogsRequest, opts ...grpc.CallOption) (*Logs, error)
 }
 
 type koggerServiceClient struct {
@@ -50,9 +55,39 @@ func (c *koggerServiceClient) GetNamespaces(ctx context.Context, in *Void, opts 
 	return out, nil
 }
 
-func (c *koggerServiceClient) GetLogs(ctx context.Context, in *LogsRequest, opts ...grpc.CallOption) (*Pods, error) {
+func (c *koggerServiceClient) ListResources(ctx context.Context, in *ListResourcesRequest, opts ...grpc.CallOption) (*ResourcesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Pods)
+	out := new(ResourcesResponse)
+	err := c.cc.Invoke(ctx, KoggerService_ListResources_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koggerServiceClient) GetResources(ctx context.Context, in *ResourcesRequest, opts ...grpc.CallOption) (*Resources, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Resources)
+	err := c.cc.Invoke(ctx, KoggerService_GetResources_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koggerServiceClient) GetResource(ctx context.Context, in *ResourceRequest, opts ...grpc.CallOption) (*Resource, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Resource)
+	err := c.cc.Invoke(ctx, KoggerService_GetResource_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koggerServiceClient) GetLogs(ctx context.Context, in *LogsRequest, opts ...grpc.CallOption) (*Logs, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Logs)
 	err := c.cc.Invoke(ctx, KoggerService_GetLogs_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -65,7 +100,10 @@ func (c *koggerServiceClient) GetLogs(ctx context.Context, in *LogsRequest, opts
 // for forward compatibility.
 type KoggerServiceServer interface {
 	GetNamespaces(context.Context, *Void) (*Namespaces, error)
-	GetLogs(context.Context, *LogsRequest) (*Pods, error)
+	ListResources(context.Context, *ListResourcesRequest) (*ResourcesResponse, error)
+	GetResources(context.Context, *ResourcesRequest) (*Resources, error)
+	GetResource(context.Context, *ResourceRequest) (*Resource, error)
+	GetLogs(context.Context, *LogsRequest) (*Logs, error)
 	mustEmbedUnimplementedKoggerServiceServer()
 }
 
@@ -79,7 +117,16 @@ type UnimplementedKoggerServiceServer struct{}
 func (UnimplementedKoggerServiceServer) GetNamespaces(context.Context, *Void) (*Namespaces, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNamespaces not implemented")
 }
-func (UnimplementedKoggerServiceServer) GetLogs(context.Context, *LogsRequest) (*Pods, error) {
+func (UnimplementedKoggerServiceServer) ListResources(context.Context, *ListResourcesRequest) (*ResourcesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListResources not implemented")
+}
+func (UnimplementedKoggerServiceServer) GetResources(context.Context, *ResourcesRequest) (*Resources, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetResources not implemented")
+}
+func (UnimplementedKoggerServiceServer) GetResource(context.Context, *ResourceRequest) (*Resource, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetResource not implemented")
+}
+func (UnimplementedKoggerServiceServer) GetLogs(context.Context, *LogsRequest) (*Logs, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLogs not implemented")
 }
 func (UnimplementedKoggerServiceServer) mustEmbedUnimplementedKoggerServiceServer() {}
@@ -121,6 +168,60 @@ func _KoggerService_GetNamespaces_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KoggerService_ListResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListResourcesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoggerServiceServer).ListResources(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KoggerService_ListResources_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoggerServiceServer).ListResources(ctx, req.(*ListResourcesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KoggerService_GetResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourcesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoggerServiceServer).GetResources(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KoggerService_GetResources_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoggerServiceServer).GetResources(ctx, req.(*ResourcesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KoggerService_GetResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoggerServiceServer).GetResource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KoggerService_GetResource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoggerServiceServer).GetResource(ctx, req.(*ResourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _KoggerService_GetLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LogsRequest)
 	if err := dec(in); err != nil {
@@ -149,6 +250,18 @@ var KoggerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNamespaces",
 			Handler:    _KoggerService_GetNamespaces_Handler,
+		},
+		{
+			MethodName: "ListResources",
+			Handler:    _KoggerService_ListResources_Handler,
+		},
+		{
+			MethodName: "GetResources",
+			Handler:    _KoggerService_GetResources_Handler,
+		},
+		{
+			MethodName: "GetResource",
+			Handler:    _KoggerService_GetResource_Handler,
 		},
 		{
 			MethodName: "GetLogs",

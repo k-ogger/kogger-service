@@ -15,11 +15,13 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	health "google.golang.org/grpc/health/grpc_health_v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 var (
 	KoggerHost string
 	KoggerPort string
+	Clientset  *kubernetes.Clientset
 )
 
 type server struct {

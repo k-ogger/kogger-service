@@ -4,7 +4,54 @@ option go_package = "github.com/k-ogger/kogger-service/koggerservicerpc";
 
 service KoggerService {
     rpc GetNamespaces(Void) returns (Namespaces);
-    rpc GetLogs(LogsRequest) returns (Pods);
+    rpc ListResources(ListResourcesRequest) returns (ResourcesResponse);
+    rpc GetResources(ResourcesRequest) returns (Resources);
+    rpc GetResource(ResourceRequest) returns (Resource);
+    rpc GetLogs(LogsRequest) returns (Logs);
+}
+
+message Void {}
+
+message ListResourcesRequest {
+    string namespace = 1;
+}
+
+enum ResourceType {
+    RESOURCE_TYPE_UNKNOWN = 0;
+    RESOURCE_TYPE_POD = 1;
+    RESOURCE_TYPE_SERVICE = 2;
+    RESOURCE_TYPE_DEPLOYMENT = 3;
+    RESOURCE_TYPE_STATEFULSET = 4;
+    RESOURCE_TYPE_CONFIGMAP = 5;
+    RESOURCE_TYPE_SECRET = 6;
+    RESOURCE_TYPE_PERSISTENTVOLUME = 7;
+    RESOURCE_TYPE_PERSISTENTVOLUMECLAIM = 8;
+    RESOURCE_TYPE_CRONJOB = 9;
+    RESOURCE_TYPE_JOB = 10;
+    RESOURCE_TYPE_REPLICASET = 11;
+    RESOURCE_TYPE_DAEMONSET = 12;
+    RESOURCE_TYPE_INGRESS = 13;
+    RESOURCE_TYPE_NETWORKPOLICY = 14;
+    RESOURCE_TYPE_SERVICEACCOUNT = 15;
+    RESOURCE_TYPE_ENDPOINTS = 16;
+    RESOURCE_TYPE_EVENT = 17;
+    RESOURCE_TYPE_ROLE = 18;
+    RESOURCE_TYPE_ROLEBINDING = 19;
+}
+
+message ResourcesRequest {
+    string namespace = 1;
+    ResourceType resourceType = 2;
+}
+
+message ResourceRequest {
+    string namespace = 1;
+    ResourceType resourceType = 2;
+    string name = 3;
+}
+
+message PodsRequest {
+    string namespace = 1;
 }
 
 message LogsRequest {
@@ -12,25 +59,51 @@ message LogsRequest {
     string pod = 2;
 }
 
-message Void {}
-
 message Namespaces {
     repeated Namespace namespaces = 1;
 }
 
 message Namespace {
     string name = 1;
-    string path = 2;
 }
 
-message Pod {
+message ResourceInlist {
     string name = 1;
-    string namespace = 2;
-    string status = 3;
-    string nodeName = 4;
-    string logs = 5;
 }
 
-message Pods {
-    repeated Pod pods = 1;
+message ResourcesList {
+    string resourceType = 1;
+    repeated ResourceInlist resources = 2;
+}
+
+message ResourcesResponse {
+    string namespace = 1;
+    repeated ResourcesList resourcesList = 2;
+}
+
+message Resources {
+    repeated Resource resources = 1;
+}
+
+message AdjustableFields {
+    map<string, string> fields = 1;
+}
+
+message Resource {
+    string namespace = 1;
+    string name = 2;
+    string status = 3;
+    AdjustableFields fields = 4;
+}
+
+message Logs {
+    string pod = 1;
+    string namespace = 2;
+    repeated LogEntry entries = 3;
+}
+
+message LogEntry {
+    string container = 1;
+    string timestamp = 2;
+    string message = 3;
 }

@@ -6,11 +6,47 @@ metadata:
 {{ include "kogger-service.labels" . | indent 4 }}
 rules:
 - apiGroups: [""]
-  resources: ["pods"]
+  resources: 
+    - "pods"
+    - "services" 
+    - "configmaps"
+    - "secrets"
+    - "persistentvolumeclaims"
+    - "serviceaccounts"
+    - "endpoints"
+    - "events"
+    - "namespaces"
   verbs: ["get", "list"]
 - apiGroups: [""]
   resources: ["pods/log"]
   verbs: ["get", "list"]
-- apiGroups: [""]
-  resources: ["namespaces"]
+- apiGroups: ["apps"]
+  resources:
+    - "deployments"
+    - "statefulsets"
+    - "replicasets"
+    - "daemonsets"
+  verbs: ["get", "list"]
+- apiGroups: ["batch"]
+  resources:
+    - "jobs"
+    - "cronjobs"
+  verbs: ["get", "list"]
+- apiGroups: ["networking.k8s.io"]
+  resources:
+    - "ingresses"
+    - "networkpolicies"
+  verbs: ["get", "list"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources:
+    - "roles"
+    - "rolebindings"
+  verbs: ["get", "list"]
+- apiGroups: ["autoscaling"]
+  resources:
+    - "horizontalpodautoscalers"
+  verbs: ["get", "list"]
+- apiGroups: ["policy"]
+  resources:
+    - "poddisruptionbudgets"
   verbs: ["get", "list"]
